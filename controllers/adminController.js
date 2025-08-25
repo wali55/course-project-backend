@@ -76,13 +76,6 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    if (currentUser.role !== "ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Only admins can update the roles",
-      });
-    }
-
     if (currentUser.id === userId && role === "USER") {
       const adminCount = await prisma.user.count({
         where: { role: "ADMIN" },
@@ -133,13 +126,6 @@ const toggleUserStatus = async (req, res) => {
   try {
     const { userId } = req.params;
     const currentUser = req.user;
-
-    if (currentUser.role !== "ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Only admin can active/deactivate accounts",
-      });
-    }
 
     const target = await prisma.user.findUnique({
       where: { id: userId },
