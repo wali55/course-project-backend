@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Started database seeding");
 
-  const adminPassword = bcrypt.hash("Admin123", 12);
+  const adminPassword = await bcrypt.hash("Admin123", 12);
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@email.com" },
@@ -21,7 +21,7 @@ async function main() {
 
   console.log("Created admin user", admin);
 
-  const userPassword = bcrypt.hash("User123", 12);
+  const userPassword = await bcrypt.hash("User123", 12);
 
   const user = await prisma.user.upsert({
     where: { email: "user@email.com" },
