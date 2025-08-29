@@ -10,7 +10,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "/api/auth/google/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (accessToken, profile, done) => {
       try {
         let user = await prisma.user.findUnique({
           where: { googleId: profile.id },
@@ -56,7 +56,7 @@ passport.use(
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: "/api/auth/github/callback",
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (accessToken, profile, done) => {
       try {
         let user = await prisma.user.findUnique({
           where: { githubId: profile.id },

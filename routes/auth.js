@@ -4,7 +4,6 @@ const {
   register,
   login,
   logout,
-  refreshTokens,
   getMe,
 } = require("../controllers/authController");
 const { authenticate } = require("../middleware/auth");
@@ -14,7 +13,6 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
-router.post("/refresh", refreshTokens);
 router.get("/me", authenticate, getMe);
 
 router.get(
@@ -29,22 +27,14 @@ router.get(
     { failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth_failed` },
     async (req, res) => {
       try {
-        const { generateTokens, saveRefreshToken } = require("../utils/jwt");
-        const { accessToken, refreshToken } = generateTokens(req.user.id);
-        await saveRefreshToken(req.user.id, refreshToken);
+        const { generateTokens } = require("../utils/jwt");
+        const { accessToken } = generateTokens(req.user.id);
 
         res.cookie("accessToken", accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 15 * 60 * 1000,
-        });
-
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         res.redirect(`${process.env.CLIENT_URL}/dashboard`);
@@ -68,22 +58,14 @@ router.get(
     { failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth_failed` },
     async (req, res) => {
       try {
-        const { generateTokens, saveRefreshToken } = require("../utils/jwt");
-        const { accessToken, refreshToken } = generateTokens(req.user.id);
-        await saveRefreshToken(req.user.id, refreshToken);
+        const { generateTokens } = require("../utils/jwt");
+        const { accessToken } = generateTokens(req.user.id);
 
         res.cookie("accessToken", accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 15 * 60 * 1000,
-        });
-
-        res.cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         res.redirect(`${process.env.CLIENT_URL}/dashboard`);

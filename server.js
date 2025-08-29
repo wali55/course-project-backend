@@ -6,7 +6,6 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
 const passport = require("./config/passport");
-const { cleanExpiredTokens } = require("./utils/jwt");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -102,10 +101,6 @@ app.use("/{*any}", (req, res) => {
         message: "Route not found"
     })
 })
-
-setInterval(() => {
-    cleanExpiredTokens().catch(console.error)
-}, 60 * 60 * 1000);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
