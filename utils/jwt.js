@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const prisma = require("../config/database");
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
