@@ -44,8 +44,29 @@ const updateProfileSchema = Joi.object({
   }),
 });
 
+const bulkActionSchema = Joi.object({
+  action: Joi.string()
+    .valid("block", "unblock", "delete", "makeAdmin", "removeAdmin")
+    .required(),
+  userIds: Joi.array().items(Joi.string()).min(1).max(50).required(),
+});
+
+const userQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  search: Joi.string().max(100).default(""),
+  sortBy: Joi.string()
+    .valid("username", "email", "role", "isActive", "createdAt", "updatedAt")
+    .default("createdAt"),
+  sortOrder: Joi.string().valid("asc", "desc").default("desc"),
+  status: Joi.string().valid("all", "active", "inactive").default("all"),
+  role: Joi.string().valid("all", "user", "admin").default("all"),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
   updateProfileSchema,
+  bulkActionSchema,
+  userQuerySchema,
 };
