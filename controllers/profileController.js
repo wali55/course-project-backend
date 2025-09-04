@@ -4,13 +4,11 @@ const {updateProfileSchema} = require("../utils/validation");
 const getProfile = async (req, res) => {
     try {
         res.json({
-            success: true,
             user: req.user
         })
     } catch (error) {
         console.error("Get profile error:", error);
         res.status(500).json({
-            success: false,
             message: "Failed to get profile"
         })
     }
@@ -21,7 +19,6 @@ const updateProfile = async (req, res) => {
         const {error, value} = updateProfileSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
-                success: false,
                 message: error.details[0].message
             })
         }
@@ -36,7 +33,6 @@ const updateProfile = async (req, res) => {
 
             if (existingUser) {
                 return res.status(409).json({
-                    success: false,
                     message: "Username is already taken"
                 })
             }
@@ -58,13 +54,11 @@ const updateProfile = async (req, res) => {
             })
 
             res.json({
-                success: true,
                 message: "Profile updated successfully",
                 user: updatedUser
             })
         } else {
             res.json({
-                success: true,
                 message: "No changes made",
                 user: req.user
             })
@@ -72,7 +66,6 @@ const updateProfile = async (req, res) => {
     } catch (error) {
         console.error("Update profile error", error);
         res.status(500).json({
-            success: false,
             message: "Failed to update profile"
         })
     }

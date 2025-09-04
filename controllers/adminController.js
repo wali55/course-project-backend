@@ -66,7 +66,6 @@ const getAllUsers = async (req, res) => {
     ]);
 
     res.json({
-      success: true,
       users: users.map((user) => ({
         ...user,
         authMethod: user.googleId
@@ -92,7 +91,6 @@ const getAllUsers = async (req, res) => {
   } catch (error) {
     console.error("Get all users error:", error);
     res.status(500).json({
-      success: false,
       message: "Failed to get users",
     });
   }
@@ -104,7 +102,6 @@ const bulkUserActions = async (req, res) => {
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({
-        success: false,
         message: "User IDs array is required",
       });
     }
@@ -159,20 +156,17 @@ const bulkUserActions = async (req, res) => {
 
       default:
         return res.status(400).json({
-          success: false,
           message: "Invalid action",
         });
     }
 
     res.json({
-      success: true,
       message: `Bulk ${action} completed successfully`,
       affectedCount: result.count,
     });
   } catch (error) {
     console.error("Bulk user actions error:", error);
     res.status(500).json({
-      success: false,
       message: "Failed to perform bulk action",
     });
   }
@@ -196,7 +190,6 @@ const getUserStats = async (req, res) => {
       ]);
 
     res.json({
-      success: true,
       stats: {
         totalUsers,
         activeUsers,
@@ -209,7 +202,6 @@ const getUserStats = async (req, res) => {
   } catch (error) {
     console.error("Get user stats error:", error);
     res.status(500).json({
-      success: false,
       message: "Failed to get user statistics",
     });
   }

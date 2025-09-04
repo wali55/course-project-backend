@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const prisma = require("../config/database");
 const {
   generateTokens,
-  verifyToken,
 } = require("../utils/jwt");
 const { registerSchema, loginSchema } = require("../utils/validation");
 
@@ -12,7 +11,6 @@ const register = async (req, res) => {
 
     if (error) {
       return res.status(400).json({
-        success: false,
         message: error.details[0].message,
       });
     }
@@ -28,7 +26,6 @@ const register = async (req, res) => {
     if (existingUser) {
       const field = existingUser.email === email ? "email" : "username";
       return res.status(409).json({
-        success: false,
         message: `This ${field} is already registered`,
       });
     }
@@ -55,18 +52,16 @@ const register = async (req, res) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.SAME_SITE,
       maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.status(201).json({
-      success: true,
       message: "User registered successfully",
     });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({
-      success: false,
       message: "Registration failed",
     });
   }
@@ -78,7 +73,6 @@ const login = async (req, res) => {
 
     if (error) {
       return res.status(400).json({
-        success: false,
         message: error.details[0].message,
       });
     }
@@ -91,14 +85,12 @@ const login = async (req, res) => {
 
     if (!user || !user.isActive) {
       return res.status(401).json({
-        success: false,
         message: "Invalid credentials",
       });
     }
 
     if (!user.password) {
       return res.status(401).json({
-        success: false,
         message: "Please use social login for this account",
       });
     }
@@ -106,7 +98,6 @@ const login = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({
-        success: false,
         message: "Invalid credentials",
       });
     }
@@ -116,13 +107,12 @@ const login = async (req, res) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.SAME_SITE,
       maxAge: 24 * 60 * 60 * 1000,
     });
 
     const { password: _, ...userData } = user;
     res.json({
-      success: true,
       message: "Login successful",
       user: userData,
       accessToken: accessToken
@@ -130,7 +120,6 @@ const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
-      success: false,
       message: "Login failed",
     });
   }
@@ -141,13 +130,11 @@ const logout = async (req, res) => {
     res.clearCookie("accessToken");
 
     res.json({
-      success: true,
       message: "Logout successful",
     });
   } catch (error) {
     console.error("Logout error", error);
     res.status(500).json({
-      success: false,
       message: "Logout failed",
     });
   }
@@ -157,13 +144,11 @@ const logout = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     res.json({
-      success: true,
       user: req.user,
     });
   } catch (error) {
     console.error("Get user error", error);
     res.status(500).json({
-      success: false,
       message: "Failed to get user data",
     });
   }

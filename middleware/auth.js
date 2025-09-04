@@ -7,7 +7,6 @@ const authenticate = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        success: false,
         message: "Access token required",
       });
     }
@@ -16,7 +15,6 @@ const authenticate = async (req, res, next) => {
 
     if (!decoded) {
       return res.status(401).json({
-        success: false,
         message: "Invalid or expired token",
       });
     }
@@ -35,7 +33,6 @@ const authenticate = async (req, res, next) => {
 
     if (!user || !user.isActive) {
       return res.status(401).json({
-        success: false,
         message: "User not found or inactive",
       });
     }
@@ -45,7 +42,6 @@ const authenticate = async (req, res, next) => {
   } catch (error) {
     console.error("Authentication error", error);
     return res.status(500).json({
-      success: false,
       message: "Authentication failed",
     });
   }
@@ -54,7 +50,6 @@ const authenticate = async (req, res, next) => {
 const requireAdmin = (req, res, next) => {
   if (req.user.role !== "ADMIN") {
     return res.status(403).json({
-      success: false,
       message: "Admin access required",
     });
   }

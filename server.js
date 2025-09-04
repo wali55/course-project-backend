@@ -63,56 +63,55 @@ app.use(passport.session());
 app.use("/api/auth", authLimiter, require("./routes/auth"));
 app.use("/api/profile", require("./routes/profile"));
 app.use("/api/admin", require("./routes/admin"));
+app.use("/api/inventories", require("./routes/inventories"));
 
 app.get("/api/health", (req, res) => {
   res.json({
-    success: true,
     message: "Server is running",
     timestamp: new Date().toISOString(),
   });
 });
 
 app.use((error, req, res, next) => {
-    console.error("Global error handler", error);
+  console.error("Global error handler", error);
 
-    if (error.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({
-            success: false,
-            message: "File size is too large. Maximum size is 5MB"
-        })
-    }
+  if (error.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({
+      message: "File size is too large. Maximum size is 5MB",
+    });
+  }
 
-    if (error.message === "Only image files are allowed") {
-        return res.status(400).json({
-            success: false,
-            message: "Only image files are allowed"
-        })
-    }
+  if (error.message === "Only image files are allowed") {
+    return res.status(400).json({
+      message: "Only image files are allowed",
+    });
+  }
 
-    res.status(500).json({
-        success: false,
-        message: process.env.NODE_ENV === "production" ? "Internal server error" : error.message
-    })
-})
+  res.status(500).json({
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : error.message,
+  });
+});
 
 app.use("/{*any}", (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: "Route not found"
-    })
-})
+  res.status(404).json({
+    message: "Route not found",
+  });
+});
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`)
-})
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+});
 
 process.on("SIGTERM", () => {
-    console.log("SIGTERM received, shutting down gracefully");
-    process.exit(0);
-})
+  console.log("SIGTERM received, shutting down gracefully");
+  process.exit(0);
+});
 
 process.on("SIGINT", () => {
-    console.log("SIGINT received, shutting down gracefully");
-    process.exit(0);
-})
+  console.log("SIGINT received, shutting down gracefully");
+  process.exit(0);
+});

@@ -20,7 +20,60 @@ model User {
   googleId String?
   githubId String?
 
+  inventories     Inventory[]
+
   @@map("users")
+}
+
+model Category {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  createdAt   DateTime    @default(now())
+
+  inventories Inventory[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  createdAt   DateTime          @default(now())
+
+  inventories InventoryOnTag[]
+
+  @@map("tags")
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  
+  image       String?  
+  isPublic    Boolean  @default(false)
+  version     Int      @default(1) 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  tags        InventoryOnTag[]
+  
+  @@map("inventories")
+}
+
+model InventoryOnTag {
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  tagId       String
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime  @default(now())
+
+  @@id([inventoryId, tagId])
+  @@map("inventory_tags")
 }
 
 enum Role {
