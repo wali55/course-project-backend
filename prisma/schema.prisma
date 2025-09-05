@@ -21,6 +21,7 @@ model User {
   githubId String?
 
   inventories     Inventory[]
+  inventoryAccess InventoryAccess[]
 
   @@map("users")
 }
@@ -61,8 +62,23 @@ model Inventory {
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
   tags        InventoryOnTag[]
+  accessList  InventoryAccess[]
   
   @@map("inventories")
+}
+
+model InventoryAccess {
+  id          String    @id @default(cuid())
+  grantedBy   String    
+  grantedAt   DateTime  @default(now())
+
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, userId])
+  @@map("inventory_access")
 }
 
 model InventoryOnTag {

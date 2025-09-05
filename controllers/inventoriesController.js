@@ -1,5 +1,6 @@
 const { uploadToCloudinary } = require("../config/cloudinary");
 const prisma = require("../config/database");
+const { checkWriteAccess } = require("../utils/checkWriteAccess");
 
 const getAllCategories = async (req, res) => {
   try {
@@ -30,6 +31,7 @@ const getTagsWithAutocomplete = async (req, res) => {
   }
 };
 
+
 const getUserInventories = async (req, res) => {
   try {
     let {
@@ -39,7 +41,7 @@ const getUserInventories = async (req, res) => {
       category,
       sortBy = "updatedAt",
       sortOrder = "desc",
-      visibility, 
+      visibility,
     } = req.query;
 
     page = parseInt(page, 10);
@@ -47,44 +49,64 @@ const getUserInventories = async (req, res) => {
 
     sortOrder = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
 
-    const where = {
-      creatorId: req.user.id,
-    };
+    let where = {};
+
+    if (req.user.role !== "ADMIN") {
+      const baseWhere = [
+        { creatorId: req.user.id },
+        { isPublic: true },
+        {
+          isPublic: false,
+          accessList: { some: { userId: req.user.id } },
+        },
+      ];
+
+      where = { OR: baseWhere };
+
+      if (req.query.creator === "mine") {
+        where.AND = [...(where.AND ?? []), { creatorId: req.user.id }];
+      } else if (req.query.creator === "others") {
+        where.AND = [...(where.AND ?? []), { creatorId: { not: req.user.id } }];
+      }
+    }
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-      ];
+      (where.AND ??= []).push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
 
     if (category) {
-      where.categoryId = category; 
+      (where.AND ??= []).push({ categoryId: category });
     }
 
     if (visibility) {
       if (visibility === "public") {
-        where.isPublic = true;
+        (where.AND ??= []).push({ isPublic: true });
       } else if (visibility === "private") {
-        where.isPublic = false;
+        (where.AND ??= []).push({ isPublic: false });
       }
+    }
+
+    if (req.user.role === "ADMIN") {
+      where = where; 
     }
 
     const inventories = await prisma.inventory.findMany({
       where,
       include: {
         category: true,
-        tags: {
-          include: { tag: true },
-        },
-        creator: {
-          select: {
-            username: true,
+        tags: { include: { tag: true } },
+        creator: { select: { id: true, username: true } },
+        accessList: {
+          include: {
+            user: { select: { id: true, username: true, email: true } },
           },
         },
-        _count: {
-          select: { tags: true },
-        },
+        _count: { select: { tags: true } },
       },
       orderBy: { [sortBy]: sortOrder },
       skip: (page - 1) * limit,
@@ -106,6 +128,7 @@ const getUserInventories = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch inventories" });
   }
 };
+
 
 const getSingleInventory = async (req, res) => {
   try {
@@ -174,9 +197,6 @@ const createInventory = async (req, res) => {
       }
     }
 
-    console.log("tags", tags);
-    console.log("tagRecords", tagRecords);
-
     const inventory = await prisma.inventory.create({
       data: {
         title,
@@ -221,19 +241,22 @@ const updateInventory = async (req, res) => {
       version,
     } = req.body;
 
-    const existing = await prisma.inventory.findUnique({
+    const { hasAccess, inventory: existing } = await checkWriteAccess(
+      req.params.id,
+      req.user.id
+    );
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const existingInventory = await prisma.inventory.findUnique({
       where: { id: req.params.id },
       include: { tags: true },
     });
 
-    if (!existing) {
+    if (!existingInventory) {
       return res.status(404).json({ error: "Inventory not found" });
-    }
-
-    const canEdit =
-      existing.creatorId === req.user.id || req.user.role === "ADMIN";
-    if (!canEdit) {
-      return res.status(403).json({ error: "Access denied" });
     }
 
     if (version && existing.version !== version) {
@@ -308,9 +331,9 @@ const deleteInventory = async (req, res) => {
       return res.status(404).json({ error: "Inventory not found" });
     }
 
-    const canDelete =
-      inventory.creatorId === req.user.id || req.user.role === "ADMIN";
-    if (!canDelete) {
+    const { hasAccess } = await checkWriteAccess(req.params.id, req.user.id);
+
+    if (!hasAccess) {
       return res.status(403).json({ error: "Access denied" });
     }
 

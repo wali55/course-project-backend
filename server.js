@@ -64,6 +64,7 @@ app.use("/api/auth", authLimiter, require("./routes/auth"));
 app.use("/api/profile", require("./routes/profile"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/inventories", require("./routes/inventories"));
+app.use("/api/inventories", require("./routes/inventoryAccess"));
 
 app.get("/api/health", (req, res) => {
   res.json({
