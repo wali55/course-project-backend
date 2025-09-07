@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { FIELD_TYPES } = require("../types/fieldTypes");
 
 const registerSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required().messages({
@@ -63,10 +64,38 @@ const userQuerySchema = Joi.object({
   role: Joi.string().valid("all", "user", "admin").default("all"),
 });
 
+const getFieldSchema = (fieldType) => {
+  switch (fieldType) {
+    case FIELD_TYPES.SINGLE_TEXT:
+      return Joi.string().max(500).allow(null, ""); 
+    case FIELD_TYPES.MULTI_TEXT:
+      return Joi.string().max(5000).allow(null, "");
+    case FIELD_TYPES.NUMBER:
+      return Joi.number().allow(null, "");
+    case FIELD_TYPES.DOCUMENT_LINK:
+      return Joi.string().uri().allow(null, "");
+    case FIELD_TYPES.BOOLEAN:
+      return Joi.boolean().allow(null, "");
+    default:
+      return Joi.any().forbidden(); 
+  }
+};
+
+const buildValidationSchema = (customFields) => {
+  const schemaShape = {};
+
+  for (const field of customFields) {
+    schemaShape[field.title] = getFieldSchema(field.fieldType);
+  }
+
+  return Joi.object(schemaShape);
+};
+
 module.exports = {
   registerSchema,
   loginSchema,
   updateProfileSchema,
   bulkActionSchema,
   userQuerySchema,
+  buildValidationSchema
 };

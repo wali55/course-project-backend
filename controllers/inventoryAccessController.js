@@ -16,6 +16,7 @@ const getInventoryAccessList = async (req, res) => {
             user: { select: { id: true, username: true, email: true } },
           },
         },
+        customFields: true,
         _count: { select: { tags: true } },
       },
     });

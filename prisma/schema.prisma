@@ -9,28 +9,29 @@ datasource db {
 }
 
 model User {
-  id String @id @default(cuid())
-  username String @unique
-  email String @unique
-  password String?
-  role Role @default(USER)
-  isActive Boolean @default(true)
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  googleId String?
-  githubId String?
+  googleId  String?
+  githubId  String?
 
   inventories     Inventory[]
   inventoryAccess InventoryAccess[]
+  inventoryItems  InventoryItem[]
 
   @@map("users")
 }
 
 model Category {
-  id          String      @id @default(cuid())
-  name        String      @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime @default(now())
 
   inventories Inventory[]
 
@@ -38,9 +39,9 @@ model Category {
 }
 
 model Tag {
-  id          String            @id @default(cuid())
-  name        String            @unique
-  createdAt   DateTime          @default(now())
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 
   inventories InventoryOnTag[]
 
@@ -50,27 +51,61 @@ model Tag {
 model Inventory {
   id          String   @id @default(cuid())
   title       String
-  description String?  
-  image       String?  
+  description String?
+  image       String?
   isPublic    Boolean  @default(false)
-  version     Int      @default(1) 
+  version     Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  tags        InventoryOnTag[]
-  accessList  InventoryAccess[]
-  
+
+  creatorId    String
+  creator      User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category          @relation(fields: [categoryId], references: [id])
+  tags         InventoryOnTag[]
+  accessList   InventoryAccess[]
+  customFields CustomField[]
+  items        InventoryItem[]
+
   @@map("inventories")
 }
 
-model InventoryAccess {
+model CustomField {
   id          String    @id @default(cuid())
-  grantedBy   String    
-  grantedAt   DateTime  @default(now())
+  title       String
+  description String?
+  fieldType   FieldType
+  showInTable Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, title])
+  @@map("custom_fields")
+}
+
+model InventoryItem {
+  id        String   @id @default(cuid())
+  customId  String?
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  creator     User      @relation(fields: [createdBy], references: [id])
+  fieldValues Json      @default("{}")
+
+  @@map("inventory_items")
+}
+
+model InventoryAccess {
+  id        String   @id @default(cuid())
+  grantedBy String
+  grantedAt DateTime @default(now())
 
   inventoryId String
   inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
@@ -95,4 +130,12 @@ model InventoryOnTag {
 enum Role {
   USER
   ADMIN
+}
+
+enum FieldType {
+  SINGLE_TEXT
+  MULTI_TEXT
+  NUMBER
+  DOCUMENT_LINK
+  BOOLEAN
 }
