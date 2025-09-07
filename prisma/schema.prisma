@@ -99,6 +99,7 @@ model InventoryItem {
   creator     User      @relation(fields: [createdBy], references: [id])
   fieldValues Json      @default("{}")
 
+  @@unique([inventoryId, customId])
   @@map("inventory_items")
 }
 
