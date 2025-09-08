@@ -8,54 +8,35 @@ class IdGenerator {
     switch (type) {
       case ID_ELEMENTS.FIXED_TEXT:
         return value || "";
-
       case ID_ELEMENTS.RANDOM_20:
         return this.randomNumber(20, format?.leadingZeros);
-
       case ID_ELEMENTS.RANDOM_32:
         return this.randomNumber(32, format?.leadingZeros);
-
       case ID_ELEMENTS.RANDOM_6:
         return this.randomNumber(6, format?.leadingZeros, 6);
-
-      case ID_ELEMENTS.RANDOM_9:
-        return this.randomNumber(9, format?.leadingZeros, 9);
-
       case ID_ELEMENTS.GUID:
         return crypto.randomUUID();
-
       case ID_ELEMENTS.DATETIME:
         return this.formatDateTime(
           new Date(),
           format?.dateFormat || "YYYYMMDD"
         );
-
       case ID_ELEMENTS.SEQUENCE:
         return this.formatSequence(
           options.sequenceNumber,
           format?.leadingZeros
         );
-
       default:
         return "";
     }
   }
 
   static randomNumber(bits, leadingZeros = false, digits = null) {
-    let max;
-    if (digits) {
-      max = Math.pow(10, digits) - 1;
-    } else {
-      max = Math.pow(2, bits) - 1;
-    }
-
+    let max = digits ? Math.pow(10, digits) - 1 : Math.pow(2, bits) - 1;
     const num = Math.floor(Math.random() * max) + 1;
-
-    if (leadingZeros && digits) {
-      return num.toString().padStart(digits, "0");
-    }
-
-    return num.toString();
+    return leadingZeros && digits
+      ? num.toString().padStart(digits, "0")
+      : num.toString();
   }
 
   static formatDateTime(date, format) {
@@ -86,14 +67,12 @@ class IdGenerator {
     const parts = idFormat.elements.map((element) =>
       this.generateElement(element, { sequenceNumber })
     );
-
     return parts.join("");
   }
 
   static generatePreview(idFormat) {
-    const mockSequence = 42;
     const parts = idFormat.elements.map((element) =>
-      this.generateElement(element, { sequenceNumber: mockSequence })
+      this.generateElement(element, { sequenceNumber: 42 })
     );
     return parts.join("");
   }

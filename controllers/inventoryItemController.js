@@ -1,9 +1,6 @@
 const prisma = require("../config/database");
 const { IdGenerator } = require("../utils/idGenerator");
 
-const inventoryIdFormats = new Map();
-
-
 const fetchInventoryItems = async (req, res) => {
   try {
     const { inventoryId } = req.params;
@@ -15,6 +12,7 @@ const fetchInventoryItems = async (req, res) => {
         creatorId: true,
         accessList: { select: { userId: true } },
       },
+      include: { idFormat: true }
     });
 
     if (!inventory) {
@@ -35,7 +33,6 @@ const fetchInventoryItems = async (req, res) => {
   }
 };
 
-
 const fetchSingleInventoryItem = async (req, res) => {
   try {
     const { inventoryId, itemId } = req.params;
@@ -47,6 +44,7 @@ const fetchSingleInventoryItem = async (req, res) => {
         creatorId: true,
         accessList: { select: { userId: true } },
       },
+      include: { idFormat: true }
     });
 
     if (!inventory) {
@@ -70,78 +68,56 @@ const fetchSingleInventoryItem = async (req, res) => {
   }
 };
 
-
 const createItem = async (req, res) => {
   try {
     const { inventoryId } = req.params;
     const { fieldValues, customId: userCustomId } = req.body;
 
-    const inventory = await prisma.inventory.findUnique({
-      where: { id: inventoryId },
-      select: {
-        isPublic: true,
-        creatorId: true,
-        accessList: { select: { userId: true } },
+    const inventory = await prisma.inventory.findFirst({
+      where: {
+        id: inventoryId,
+        OR: [
+          { creatorId: req.user.id },
+          { accessList: { some: { userId: req.user.id } } },
+        ],
       },
+      include: { idFormat: true },
     });
 
-    if (!inventory) {
+    if (!inventory && req.user.role !== "ADMIN") {
       return res
         .status(404)
-        .json({ message: "Inventory not found" });
-    }
-
-    const userId = req.user.id;
-    const isAdmin = req.user.role === "ADMIN";
-    const hasPrivateAccess =
-      inventory.creatorId === userId ||
-      inventory.accessList.some((u) => u.userId === userId);
-
-    if (!isAdmin) {
-      if (!inventory.isPublic && !hasPrivateAccess) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to create item in this inventory" });
-      }
+        .json({ message: "Inventory not found or not authorized" });
     }
 
     let customId = userCustomId;
 
-    if (!customId) {
-      const idFormat = inventoryIdFormats.get(inventoryId);
-      if (idFormat) {
-        customId = await IdGenerator.generateCustomId(
-          inventoryId,
-          idFormat,
-          prisma
-        );
-      }
+    if (!customId && inventory.idFormat) {
+      customId = await IdGenerator.generateCustomId(
+        inventoryId,
+        inventory.idFormat,
+        prisma
+      );
     }
 
     if (customId) {
       const existing = await prisma.inventoryItem.findFirst({
-        where: {
-          inventoryId,
-          customId,
-        },
+        where: { inventoryId, customId },
       });
-
       if (existing) {
-        return res.status(400).json({ message: "Custom ID already exists" });
+        return res.status(400).json({ error: "Custom ID already exists" });
       }
     }
 
     const item = await prisma.inventoryItem.create({
       data: {
         inventoryId,
-        createdBy: userId,
+        createdBy: req.user.id,
         customId,
         fieldValues: fieldValues || {},
       },
       include: {
-        creator: {
-          select: { id: true, username: true },
-        },
+        creator: { select: { id: true, username: true } },
       },
     });
 
@@ -160,19 +136,21 @@ const updateItem = async (req, res) => {
     const { inventoryId, itemId } = req.params;
     const { fieldValues, customId } = req.body;
 
-    const inventory = await prisma.inventory.findUnique({
-      where: { id: inventoryId },
-      select: {
-        isPublic: true,
-        creatorId: true,
-        accessList: { select: { userId: true } },
+    const inventory = await prisma.inventory.findFirst({
+      where: {
+        id: inventoryId,
+        OR: [
+          { creatorId: req.user.id },
+          { accessList: { some: { userId: req.user.id } } },
+        ],
       },
+      include: { idFormat: true },
     });
 
-    if (!inventory) {
+    if (!inventory && req.user.role !== "ADMIN") {
       return res
         .status(404)
-        .json({ message: "Inventory not found" });
+        .json({ message: "Inventory not found or not authorized" });
     }
 
     const item = await prisma.inventoryItem.findFirst({
@@ -180,23 +158,7 @@ const updateItem = async (req, res) => {
     });
 
     if (!item) {
-      return res
-        .status(404)
-        .json({ message: "Item not found" });
-    }
-
-    const userId = req.user.id;
-    const isAdmin = req.user.role === "ADMIN";
-    const hasPrivateAccess =
-      inventory.creatorId === userId ||
-      inventory.accessList.some((u) => u.userId === userId);
-
-    if (!isAdmin) {
-      if (!inventory.isPublic && !hasPrivateAccess) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to update item in this inventory" });
-      }
+      return res.status(404).json({ message: "Item not found" });
     }
 
     if (customId && customId !== item.customId) {
@@ -236,22 +198,25 @@ const updateItem = async (req, res) => {
   }
 };
 
-
 const deleteItem = async (req, res) => {
   try {
     const { inventoryId, itemId } = req.params;
 
-    const inventory = await prisma.inventory.findUnique({
-      where: { id: inventoryId },
-      select: {
-        isPublic: true,
-        creatorId: true,
-        accessList: { select: { userId: true } },
+    const inventory = await prisma.inventory.findFirst({
+      where: {
+        id: inventoryId,
+        OR: [
+          { creatorId: req.user.id },
+          { accessList: { some: { userId: req.user.id } } },
+        ],
       },
+      include: { idFormat: true },
     });
 
-    if (!inventory) {
-      return res.status(404).json({ message: 'Inventory not found' });
+    if (!inventory && req.user.role !== "ADMIN") {
+      return res
+        .status(404)
+        .json({ message: "Inventory not found or not authorized" });
     }
 
     const item = await prisma.inventoryItem.findFirst({
@@ -262,32 +227,23 @@ const deleteItem = async (req, res) => {
     });
 
     if (!item) {
-      return res.status(404).json({ message: 'Item not found' });
-    }
-
-    const userId = req.user.id;
-    const userRole = req.user.role;
-
-    const isAdmin = userRole === 'ADMIN';
-    const hasPrivateAccess =
-      inventory.creatorId === userId ||
-      inventory.accessList.some((u) => u.userId === userId);
-
-    if (!isAdmin) {
-      if (!inventory.isPublic && !hasPrivateAccess) {
-        return res.status(403).json({ message: 'Not authorized to delete this item' });
-      }
+      return res.status(404).json({ message: "Item not found" });
     }
 
     await prisma.inventoryItem.delete({
       where: { id: itemId },
     });
 
-    res.json({ message: 'Item deleted successfully' });
+    res.json({ message: "Item deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
-module.exports = { fetchInventoryItems, fetchSingleInventoryItem, createItem, updateItem, deleteItem };
+module.exports = {
+  fetchInventoryItems,
+  fetchSingleInventoryItem,
+  createItem,
+  updateItem,
+  deleteItem,
+};
