@@ -91,11 +91,36 @@ const buildValidationSchema = (customFields) => {
   return Joi.object(schemaShape);
 };
 
+const validateAndProcessSchema = (customFields) => {
+  const schemaShape = {};
+
+  for (const field of customFields) {
+    switch (field.fieldType) {
+      case 'NUMBER':
+        schemaShape[field.title] = Joi.number().required();
+        break;
+
+      case 'BOOLEAN':
+        schemaShape[field.title] = Joi.boolean().required();
+        break;
+
+      case 'DOCUMENT_LINK':
+        schemaShape[field.title] = Joi.string().uri().required();
+        break;
+
+      default: 
+        schemaShape[field.title] = Joi.string().required();
+    }
+  }
+  return Joi.object(schemaShape);
+}
+
 module.exports = {
   registerSchema,
   loginSchema,
   updateProfileSchema,
   bulkActionSchema,
   userQuerySchema,
-  buildValidationSchema
+  buildValidationSchema,
+  validateAndProcessSchema
 };

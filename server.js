@@ -22,7 +22,7 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 1000,
   message: {
     success: false,
     message: "Too many requests, please try again later",
@@ -31,7 +31,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10000,
+  max: 100,
   message: {
     success: false,
     message: "Too many authentication attempts, please try again later",
@@ -67,7 +67,7 @@ app.use("/api/inventories", require("./routes/inventories"));
 app.use("/api/inventories", require("./routes/inventoryAccess"));
 app.use('/api/inventories', require("./routes/customFields"));
 app.use('/api/inventories', require("./routes/customId"));
-app.use('/api/inventories', require("./routes/inventoryItem"));
+app.use('/api/items', require("./routes/inventoryItem"));
 
 app.get("/api/health", (req, res) => {
   res.json({
