@@ -18,8 +18,8 @@ router.post("/image", authenticate, upload.single('image'), uploadInventoryImage
 router.get("/categories", getAllCategories);
 router.get("/tags", getTagsWithAutocomplete);
 router.get("/", authenticate, getUserInventories);
-router.get("/:id", authenticate, getSingleInventory);
 router.post("/", authenticate, createInventory);
+router.get("/:id", authenticate, getSingleInventory);
 router.put("/:id", authenticate, updateInventory);
 router.delete("/:id", authenticate, deleteInventory);
 

@@ -22,7 +22,7 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 200,
   message: {
     success: false,
     message: "Too many requests, please try again later",
@@ -31,7 +31,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 50,
   message: {
     success: false,
     message: "Too many authentication attempts, please try again later",
@@ -52,7 +52,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 20 * 60 * 1000,
     },
   })
 );

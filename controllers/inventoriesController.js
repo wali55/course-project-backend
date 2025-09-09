@@ -132,26 +132,25 @@ const getUserInventories = async (req, res) => {
 
 const getSingleInventory = async (req, res) => {
   try {
+    const { id } = req.params;
     const inventory = await prisma.inventory.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         category: true,
-        creator: { select: { id: true, username: true } },
         tags: { include: { tag: true } },
+        creator: { select: { id: true, username: true } },
+        accessList: {
+          include: {
+            user: { select: { id: true, username: true, email: true } },
+          },
+        },
+        customFields: true,
+        _count: { select: { tags: true } },
       },
     });
 
     if (!inventory) {
       return res.status(404).json({ error: "Inventory not found" });
-    }
-
-    const canAccess =
-      inventory.isPublic ||
-      inventory.creatorId === req.user?.id ||
-      req.user?.role === "ADMIN";
-
-    if (!canAccess) {
-      return res.status(403).json({ error: "Access denied" });
     }
 
     res.json({

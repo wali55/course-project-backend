@@ -34,7 +34,7 @@ router.get(
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 15 * 60 * 1000,
+          maxAge: 20 * 60 * 1000,
         });
 
         res.redirect(`${process.env.CLIENT_URL}/dashboard`);
@@ -65,7 +65,7 @@ router.get(
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 15 * 60 * 1000,
+          maxAge: 20 * 60 * 1000,
         });
 
         res.redirect(`${process.env.CLIENT_URL}/dashboard`);

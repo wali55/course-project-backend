@@ -1,8 +1,6 @@
 const bcrypt = require("bcryptjs");
 const prisma = require("../config/database");
-const {
-  generateTokens,
-} = require("../utils/jwt");
+const { generateTokens } = require("../utils/jwt");
 const { registerSchema, loginSchema } = require("../utils/validation");
 
 const register = async (req, res) => {
@@ -53,7 +51,7 @@ const register = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.SAME_SITE,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 20 * 60 * 1000,
     });
 
     res.status(201).json({
@@ -108,14 +106,14 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.SAME_SITE,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 20 * 60 * 1000,
     });
 
     const { password: _, ...userData } = user;
     res.json({
       message: "Login successful",
       user: userData,
-      accessToken: accessToken
+      accessToken: accessToken,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -127,7 +125,11 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    res.clearCookie("accessToken");
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.SAME_SITE,
+    });
 
     res.json({
       message: "Logout successful",
@@ -139,7 +141,6 @@ const logout = async (req, res) => {
     });
   }
 };
-
 
 const getMe = async (req, res) => {
   try {
