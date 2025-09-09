@@ -8,6 +8,7 @@ const getInventoryAccessList = async (req, res) => {
     const inventory = await prisma.inventory.findUnique({
       where: { id: inventoryId },
       include: {
+        idFormat: true,
         category: true,
         tags: { include: { tag: true } },
         creator: { select: { id: true, username: true } },

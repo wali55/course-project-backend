@@ -98,6 +98,8 @@ const getUserInventories = async (req, res) => {
     const inventories = await prisma.inventory.findMany({
       where,
       include: {
+        customFields: true,
+        idFormat: true,
         category: true,
         tags: { include: { tag: true } },
         creator: { select: { id: true, username: true } },
@@ -136,6 +138,8 @@ const getSingleInventory = async (req, res) => {
     const inventory = await prisma.inventory.findUnique({
       where: { id },
       include: {
+        customFields: true,
+        idFormat: true,
         category: true,
         tags: { include: { tag: true } },
         creator: { select: { id: true, username: true } },
