@@ -68,6 +68,7 @@ app.use("/api/inventories", require("./routes/inventoryAccess"));
 app.use('/api/inventories', require("./routes/customFields"));
 app.use('/api/inventories', require("./routes/customId"));
 app.use('/api/items', require("./routes/inventoryItem"));
+app.use('/api/home', require("./routes/homePage"));
 
 app.get("/api/health", (req, res) => {
   res.json({
