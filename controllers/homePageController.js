@@ -7,6 +7,8 @@ const getHomePageInventories = async (req, res) => {
       limit = "10",
       search,
       category,
+      visibility,
+      creator,
       sortBy = "updatedAt",
       sortOrder = "desc",
     } = req.query;
@@ -27,8 +29,16 @@ const getHomePageInventories = async (req, res) => {
       });
     }
 
-    if (category) {
+    if (category && category !== "all") {
       (where.AND ??= []).push({ categoryId: category });
+    }
+
+    if (visibility && visibility !== "all") {
+      (where.AND ??= []).push({ isPublic: visibility === "public" });
+    }
+
+    if (creator && creator !== "all") {
+      (where.AND ??= []).push({ creatorId: creator });
     }
 
     const inventories = await prisma.inventory.findMany({
@@ -64,6 +74,7 @@ const getHomePageInventories = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch inventories" });
   }
 };
+
 
 const getHomePageInventory = async (req, res) => {
   try {
